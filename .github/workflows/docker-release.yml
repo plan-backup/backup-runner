@@ -3,7 +3,7 @@ name: Build and Release Docker Image
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v0.0.1, etc.
+      - "v*.*.*" # Triggers on version tags like v1.0.0, v0.0.1, etc.
   workflow_dispatch: # Allow manual triggering
 
 env:
@@ -14,100 +14,102 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # Changed from read to write
       packages: write
       attestations: write
       id-token: write
+      actions: read
+      security-events: write
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract tag version
-      id: extract_tag
-      run: |
-        echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        echo "version_number=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Extract tag version
+        id: extract_tag
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "version_number=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=tag
-          type=raw,value=latest
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
-        labels: |
-          org.opencontainers.image.title=Plan B Backup Runner
-          org.opencontainers.image.description=Database backup container for PostgreSQL, MySQL, MongoDB with S3 upload
-          org.opencontainers.image.vendor=Plan B
-          org.opencontainers.image.version=${{ steps.extract_tag.outputs.version }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          labels: |
+            org.opencontainers.image.title=Plan B Backup Runner
+            org.opencontainers.image.description=Database backup container for PostgreSQL, MySQL, MongoDB with S3 upload
+            org.opencontainers.image.vendor=Plan B
+            org.opencontainers.image.version=${{ steps.extract_tag.outputs.version }}
 
-    - name: Build and push Docker image
-      id: push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-    - name: Generate artifact attestation
-      uses: actions/attest-build-provenance@v1
-      with:
-        subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        subject-digest: ${{ steps.push.outputs.digest }}
-        push-to-registry: true
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.extract_tag.outputs.version }}
-        name: "Plan B Backup Runner ${{ steps.extract_tag.outputs.version }}"
-        body: |
-          ## 🚀 Plan B Backup Runner ${{ steps.extract_tag.outputs.version }}
-          
-          ### 📦 Docker Images
-          - `ghcr.io/plan-backup/backup-runner:${{ steps.extract_tag.outputs.version_number }}`
-          - `ghcr.io/plan-backup/backup-runner:latest`
-          
-          ### 🎯 Supported Databases
-          - PostgreSQL (pg_dump)
-          - MySQL (mysqldump) 
-          - MongoDB (mongodump)
-          
-          ### ☁️ Supported Storage
-          - AWS S3
-          - Wasabi Cloud Storage
-          - Cloudflare R2
-          - Google Cloud Storage
-          - Any S3-compatible storage
-          
-          ### 🐳 Usage
-          ```bash
-          docker run --rm ghcr.io/plan-backup/backup-runner:${{ steps.extract_tag.outputs.version_number }}
-          ```
-          
-          See [README.md](https://github.com/plan-backup/backup-runner/blob/main/README.md) for detailed usage instructions.
-          
-          ### 🔗 Integration
-          This container is designed to work with the [Plan B Database Backup Platform](https://planb.apito.io).
-        draft: false
-        prerelease: ${{ contains(steps.extract_tag.outputs.version, 'rc') || contains(steps.extract_tag.outputs.version, 'beta') || contains(steps.extract_tag.outputs.version, 'alpha') }}
-        generate_release_notes: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.extract_tag.outputs.version }}
+          name: "Plan B Backup Runner ${{ steps.extract_tag.outputs.version }}"
+          body: |
+            ## 🚀 Plan B Backup Runner ${{ steps.extract_tag.outputs.version }}
+
+            ### 📦 Docker Images
+            - `ghcr.io/plan-backup/backup-runner:${{ steps.extract_tag.outputs.version_number }}`
+            - `ghcr.io/plan-backup/backup-runner:latest`
+
+            ### 🎯 Supported Databases
+            - PostgreSQL (pg_dump)
+            - MySQL (mysqldump) 
+            - MongoDB (mongodump)
+
+            ### ☁️ Supported Storage
+            - AWS S3
+            - Wasabi Cloud Storage
+            - Cloudflare R2
+            - Google Cloud Storage
+            - Any S3-compatible storage
+
+            ### 🐳 Usage
+            ```bash
+            docker run --rm ghcr.io/plan-backup/backup-runner:${{ steps.extract_tag.outputs.version_number }}
+            ```
+
+            See [README.md](https://github.com/plan-backup/backup-runner/blob/main/README.md) for detailed usage instructions.
+
+            ### 🔗 Integration
+            This container is designed to work with the [Plan B Database Backup Platform](https://planb.apito.io).
+          draft: false
+          prerelease: ${{ contains(steps.extract_tag.outputs.version, 'rc') || contains(steps.extract_tag.outputs.version, 'beta') || contains(steps.extract_tag.outputs.version, 'alpha') }}
+          generate_release_notes: true
