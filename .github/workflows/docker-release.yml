@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: plan-backup/backup-runner
+  IMAGE_NAME: ${{ github.repository_owner }}/backup-runner
 
 jobs:
   build-and-push:
@@ -85,9 +85,9 @@ jobs:
           body: |
             ## 🚀 Plan B Backup Runner ${{ steps.extract_tag.outputs.version }}
 
-            ### 📦 Docker Images
-            - `ghcr.io/plan-backup/backup-runner:${{ steps.extract_tag.outputs.version_number }}`
-            - `ghcr.io/plan-backup/backup-runner:latest`
+             ### 📦 Docker Images
+             - `ghcr.io/${{ github.repository_owner }}/backup-runner:${{ steps.extract_tag.outputs.version_number }}`
+             - `ghcr.io/${{ github.repository_owner }}/backup-runner:latest`
 
             ### 🎯 Supported Databases
             - PostgreSQL (pg_dump)
@@ -102,9 +102,9 @@ jobs:
             - Any S3-compatible storage
 
             ### 🐳 Usage
-            ```bash
-            docker run --rm ghcr.io/plan-backup/backup-runner:${{ steps.extract_tag.outputs.version_number }}
-            ```
+             ```bash
+             docker run --rm ghcr.io/${{ github.repository_owner }}/backup-runner:${{ steps.extract_tag.outputs.version_number }}
+             ```
 
             See [README.md](https://github.com/plan-backup/backup-runner/blob/main/README.md) for detailed usage instructions.
 
