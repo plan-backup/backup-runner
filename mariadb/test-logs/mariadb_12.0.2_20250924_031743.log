@@ -1,0 +1,56 @@
+INFO:__main__:🚀 Starting MariaDB 12.0.2 Build & Test Pipeline
+INFO:__main__:============================================================
+INFO:__main__:📋 Step 1: Starting test database...
+INFO:__main__:🐬 Starting MariaDB 12.0.2 container...
+INFO:__main__:✅ MariaDB container 'planb_test_mariadb_1202_1758697598' started on port 3904
+INFO:__main__:⏳ Waiting for MariaDB to be ready...
+INFO:__main__:Attempt 1: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+
+INFO:__main__:Attempt 2: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+
+INFO:__main__:Attempt 3: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+
+INFO:__main__:Attempt 4: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+
+INFO:__main__:✅ MariaDB is ready!
+INFO:__main__:📋 Step 2: Setting up test data...
+INFO:__main__:📊 Setting up test data...
+WARNING:__main__:Command failed: CREATE TABLE IF NOT EXISTS movies (id INT PRIMARY KEY, title VARCHAR(255), year INT);, Error: --------------
+CREATE TABLE IF NOT EXISTS movies (id INT PRIMARY KEY, title VARCHAR(255), year INT)
+--------------
+
+ERROR 1046 (3D000) at line 1: No database selected
+
+WARNING:__main__:Command failed: CREATE TABLE IF NOT EXISTS actors (id INT PRIMARY KEY, name VARCHAR(255), movie_id INT);, Error: --------------
+CREATE TABLE IF NOT EXISTS actors (id INT PRIMARY KEY, name VARCHAR(255), movie_id INT)
+--------------
+
+ERROR 1046 (3D000) at line 1: No database selected
+
+WARNING:__main__:Command failed: INSERT INTO movies (id, title, year) VALUES (1, 'The Matrix', 1999), (2, 'Inception', 2010);, Error: --------------
+INSERT INTO movies (id, title, year) VALUES (1, 'The Matrix', 1999), (2, 'Inception', 2010)
+--------------
+
+ERROR 1046 (3D000) at line 1: No database selected
+
+WARNING:__main__:Command failed: INSERT INTO actors (id, name, movie_id) VALUES (1, 'Keanu Reeves', 1), (2, 'Leonardo DiCaprio', 2);, Error: --------------
+INSERT INTO actors (id, name, movie_id) VALUES (1, 'Keanu Reeves', 1), (2, 'Leonardo DiCaprio', 2)
+--------------
+
+ERROR 1046 (3D000) at line 1: No database selected
+
+INFO:__main__:✅ Test data setup complete
+INFO:__main__:📋 Step 3: Starting MinIO...
+INFO:__main__:☁️  Starting MinIO container...
+INFO:__main__:✅ MinIO container 'planb_test_minio_1758697598' started on port 9598
+INFO:__main__:⏳ Waiting for MinIO to be ready...
+INFO:__main__:✅ Created MinIO bucket: test-backups
+INFO:__main__:📋 Step 4: Building backup container...
+INFO:__main__:🔨 Building MariaDB 12.0.2 backup container...
+ERROR:__main__:❌ Failed to build MariaDB container: COPY failed: file not found in build context or excluded by .dockerignore: stat mariadb/12.0.2/runner.py: file does not exist
+INFO:__main__:🧹 Cleaning up...
+INFO:__main__:✅ Test network removed

@@ -1,0 +1,18 @@
+INFO:__main__:🚀 Starting MariaDB 10.11 Build & Test Pipeline
+INFO:__main__:============================================================
+INFO:__main__:📋 Step 1: Starting test database...
+INFO:__main__:🐬 Starting MariaDB 10.11 container...
+INFO:__main__:✅ MariaDB container 'planb_test_mariadb_1011_1758656835' started on port 4140
+INFO:__main__:⏳ Waiting for MariaDB to be ready...
+INFO:__main__:🧹 Cleaning up...
+INFO:__main__:✅ Test network removed
+Traceback (most recent call last):
+  File "/Users/diablo/Projects/react/backup-runner/mariadb/./10.11//test.py", line 450, in <module>
+    success = test.run_full_test()
+  File "/Users/diablo/Projects/react/backup-runner/mariadb/./10.11//test.py", line 408, in run_full_test
+    if not self.start_database_container():
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/diablo/Projects/react/backup-runner/mariadb/./10.11//test.py", line 76, in start_database_container
+    time.sleep(3)  # Increased sleep time
+    ~~~~~~~~~~^^^
+KeyboardInterrupt

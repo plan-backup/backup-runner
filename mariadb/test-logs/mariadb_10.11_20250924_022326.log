@@ -1,0 +1,33 @@
+INFO:__main__:🚀 Starting MariaDB 10.11 Build & Test Pipeline
+INFO:__main__:============================================================
+INFO:__main__:📋 Step 1: Starting test database...
+INFO:__main__:🐬 Starting MariaDB 10.11 container...
+INFO:__main__:✅ MariaDB container 'planb_test_mariadb_1011_1758659006' started on port 3312
+INFO:__main__:⏳ Waiting for MariaDB to be ready...
+INFO:__main__:Attempt 1: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+
+INFO:__main__:Attempt 2: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 2002 (HY000): Can't connect to local server through socket '/run/mysqld/mysqld.sock' (2)
+
+INFO:__main__:Attempt 3: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 1045 (28000): Access denied for user 'testuser'@'localhost' (using password: YES)
+
+INFO:__main__:Attempt 4: MariaDB not ready yet (return code: 1)
+INFO:__main__:Error: ERROR 1045 (28000): Access denied for user 'testuser'@'localhost' (using password: YES)
+
+INFO:__main__:✅ MariaDB is ready!
+INFO:__main__:📋 Step 2: Setting up test data...
+INFO:__main__:📊 Setting up test data...
+WARNING:__main__:Command failed: USE planb_testdb; INSERT INTO actors (id, name, movie_id) VALUES (1, 'Keanu Reeves', 1), (2, 'Leonardo DiCaprio', 2);, Error: --------------
+INSERT INTO actors (id, name, movie_id) VALUES (1, 'Keanu Reeves', 1), (2, 'Leonardo DiCaprio', 2)
+--------------
+
+ERROR 1062 (23000) at line 1: Duplicate entry '1' for key 'PRIMARY'
+
+INFO:__main__:✅ Test data setup complete
+INFO:__main__:📋 Step 3: Starting MinIO...
+INFO:__main__:☁️  Starting MinIO container...
+ERROR:__main__:❌ Failed to start MinIO container: 404 Client Error for http+docker://localhost/v1.51/images/create?tag=10.11&fromImage=minio%2Fminio: Not Found ("manifest for minio/minio:10.11 not found: manifest unknown: manifest unknown")
+INFO:__main__:🧹 Cleaning up...
+INFO:__main__:✅ Test network removed

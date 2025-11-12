@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Plan B Database Backup Runner
-Supports PostgreSQL, MySQL, MongoDB backups with S3 upload
+Plan B Database Backup Runner - Shared Base Class
+Lightweight, database-agnostic backup runner
 """
 
 import os
@@ -17,10 +17,10 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class BackupRunner:
+class BackupRunnerBase:
     def __init__(self):
         self.job_config = self.load_job_config()
-        self.setup_aws_credentials()
+        self.setup_storage_credentials()
         
     def load_job_config(self):
         """Load job configuration from environment variables"""
@@ -52,8 +52,8 @@ class BackupRunner:
             logger.error(f"Missing required environment variable: {e}")
             sys.exit(1)
     
-    def setup_aws_credentials(self):
-        """Setup AWS credentials for S3 operations"""
+    def setup_storage_credentials(self):
+        """Setup storage credentials for S3-compatible operations"""
         storage = self.job_config['storage']
         
         # Configure AWS CLI
@@ -66,7 +66,7 @@ class BackupRunner:
             os.environ['AWS_ENDPOINT_URL'] = storage['endpoint']
     
     def run_backup(self):
-        """Execute the backup process"""
+        """Execute the backup process - to be implemented by subclasses"""
         logger.info(f"Starting backup job {self.job_config['job_id']}")
         
         try:
@@ -76,7 +76,7 @@ class BackupRunner:
             # Create backup file
             backup_file = self.create_backup()
             
-            # Compress backup
+            # Compress backup if needed
             compressed_file = self.compress_backup(backup_file)
             
             # Upload to storage
@@ -96,106 +96,8 @@ class BackupRunner:
             sys.exit(1)
     
     def create_backup(self):
-        """Create database backup based on engine type"""
-        engine = self.job_config['connection']['engine'].lower()
-        
-        with tempfile.NamedTemporaryFile(mode='w+b', delete=False, suffix=f'.{engine}') as f:
-            backup_file = f.name
-        
-        if engine == 'postgresql' or engine == 'postgres':
-            self.backup_postgresql(backup_file)
-        elif engine == 'mysql':
-            self.backup_mysql(backup_file)
-        elif engine == 'mongodb' or engine == 'mongo':
-            self.backup_mongodb(backup_file)
-        else:
-            raise ValueError(f"Unsupported database engine: {engine}")
-        
-        logger.info(f"Backup created: {backup_file}")
-        return backup_file
-    
-    def backup_postgresql(self, backup_file):
-        """Create PostgreSQL backup using pg_dump"""
-        conn = self.job_config['connection']
-        
-        env = os.environ.copy()
-        env['PGPASSWORD'] = conn['password']
-        
-        cmd = [
-            'pg_dump',
-            '--host', conn['host'],
-            '--port', str(conn['port']),
-            '--username', conn['username'],
-            '--dbname', conn['database'],
-            '--verbose',
-            '--no-password',
-            '--format=custom',
-            '--compress=9',
-            '--file', backup_file
-        ]
-        
-        result = subprocess.run(cmd, env=env, capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            raise Exception(f"pg_dump failed: {result.stderr}")
-        
-        logger.info("PostgreSQL backup completed")
-    
-    def backup_mysql(self, backup_file):
-        """Create MySQL backup using mysqldump"""
-        conn = self.job_config['connection']
-        
-        cmd = [
-            'mysqldump',
-            '--host', conn['host'],
-            '--port', str(conn['port']),
-            '--user', conn['username'],
-            f'--password={conn["password"]}',
-            '--single-transaction',
-            '--routines',
-            '--triggers',
-            '--compress',
-            conn['database']
-        ]
-        
-        with open(backup_file, 'w') as f:
-            result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True)
-        
-        if result.returncode != 0:
-            raise Exception(f"mysqldump failed: {result.stderr}")
-        
-        logger.info("MySQL backup completed")
-    
-    def backup_mongodb(self, backup_file):
-        """Create MongoDB backup using mongodump"""
-        conn = self.job_config['connection']
-        
-        # MongoDB backup creates a directory, so we need to handle it differently
-        backup_dir = backup_file.replace('.mongodb', '_mongodb_backup')
-        os.makedirs(backup_dir, exist_ok=True)
-        
-        uri = f"mongodb://{conn['username']}:{conn['password']}@{conn['host']}:{conn['port']}/{conn['database']}"
-        
-        cmd = [
-            'mongodump',
-            '--uri', uri,
-            '--out', backup_dir,
-            '--gzip'
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            raise Exception(f"mongodump failed: {result.stderr}")
-        
-        # Archive the directory
-        archive_cmd = ['tar', '-czf', backup_file, '-C', os.path.dirname(backup_dir), os.path.basename(backup_dir)]
-        subprocess.run(archive_cmd, check=True)
-        
-        # Clean up directory
-        subprocess.run(['rm', '-rf', backup_dir], check=True)
-        
-        logger.info("MongoDB backup completed")
+        """Create database backup - must be implemented by subclasses"""
+        raise NotImplementedError("Subclasses must implement create_backup method")
     
     def compress_backup(self, backup_file):
         """Compress backup file if not already compressed"""
@@ -299,7 +201,3 @@ class BackupRunner:
             
         except Exception as e:
             logger.warning(f"Failed to update job metadata: {e}")
-
-if __name__ == '__main__':
-    runner = BackupRunner()
-    runner.run_backup()
